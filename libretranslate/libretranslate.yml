@@ -1,0 +1,38 @@
+services:
+  libretranslate:
+    container_name: libretranslate
+    image: libretranslate/libretranslate:latest
+    #build:
+    #  context: .
+    #  dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    #ports:
+    #  - "5000:5000"
+    healthcheck:
+      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
+    ## Uncomment above command and define your args if necessary
+    # command: --ssl --ga-id MY-GA-ID --req-limit 100 --char-limit 500
+    tty: true
+    ## Uncomment this section and the `volumes` section if you want to backup your API keys
+    environment:
+      - LT_API_KEYS_DB_PATH=/custom/db/api_keys.db # Same result as `db/api_keys.db` or `./db/api_keys.db`
+      - LT_LOAD_ONLY=en,de,fr,ja,zh,it,ko,ru,es
+    volumes:
+      - ${DOCKER_ROOT:-.}/libretranslate/data/db:/custom/db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.libretranslate.rule=Host(`libretranslate.s.zlendy.com`)
+      - traefik.http.routers.libretranslate.entrypoints=https
+      - traefik.http.routers.libretranslate.tls=true
+
+      - traefik.http.services.libretranslate.loadbalancer.server.port=5000
+
+      - homepage.group=Core
+      - homepage.name=LibreTranslate
+      - homepage.icon=/services/libretranslate.png
+      - homepage.href=https://libretranslate.s.zlendy.com
+
+networks:
+  default:
+    name: service_network
+    external: true
